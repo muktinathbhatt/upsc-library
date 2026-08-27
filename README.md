@@ -1,12 +1,13 @@
 # UPSC Library
 
-A personal UPSC study library. The published website currently contains the
-**Arthashastra UPSC Economics Library**, a twelve-book guide covering the UPSC
-economics syllabus, Prelims revision, and Mains answer writing.
+A personal UPSC study library containing structured Economics, Geography, and
+History collections for Prelims and Mains preparation.
 
 ## Repository contents
 
-- `Economics-Library/` — the static website published with GitHub Pages
+- `Economics-Library/` — Economics books and exam practice
+- `Geography-Library/` — Geography books, map work, and exam practice
+- `History-Library/` — History books and exam practice
 - `NCERT/` — source study material
 - `quotes,terminology etc.xlsx` — working notes
 
