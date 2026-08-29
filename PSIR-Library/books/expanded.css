@@ -1,0 +1,13 @@
+:root{--green:#172d4a;--lime:#e5b74b}.book-toc>a.active,.book-toc .back,.book-nav a,.source-note a{color:#172d4a}.reading-progress{background:#e5b74b}.recall{background:#172d4a}.recall h2{color:#f3ce75}.topbar{background:rgba(251,249,242,.96)}
+.objectives,.concept-frame,.thinker-card,.debate,.answer-blueprint,.source-list,.revision-grid{margin:26px 0}
+.objectives{padding:21px 24px;background:#fff;border:1px solid var(--line)}.objectives h3{margin-top:0}
+.concept-frame{padding:20px 24px;background:#edf1f6;border-left:4px solid #365d88}.concept-frame h3{margin-top:0}
+.thinker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:24px 0}.thinker-card{margin:0;padding:18px;border:1px solid var(--line);background:#fff}.thinker-card b{display:block;color:#172d4a;margin-bottom:7px}.thinker-card p{font-size:16px;margin:0}
+.debate{padding:20px 24px;background:#fff5d8;border-left:4px solid #e5b74b}.debate h3{margin-top:0}
+.argument-chain{font:700 15px/1.7 var(--sans);background:#172d4a;color:#fff;padding:20px 24px;margin:24px 0}
+.comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.comparison>div{padding:18px;border:1px solid var(--line);background:#fff}.comparison b{display:block;margin-bottom:6px}
+.answer-blueprint{border:1px solid var(--line);background:#fff}.answer-blueprint summary{cursor:pointer;padding:17px 20px;font:700 16px/1.45 var(--sans)}.answer-blueprint>div{padding:0 20px 20px}.answer-blueprint p,.answer-blueprint li{font-size:16px}.thesis{padding:13px 15px;background:#edf1f6;border-left:3px solid #365d88}.scholars{color:#654b12}
+.revision-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.revision-grid>div{padding:17px;background:#fff;border:1px solid var(--line)}.revision-grid b{display:block;margin-bottom:6px}
+.source-list{padding:20px 24px;background:#fff;border:1px solid var(--line)}.source-list h3{margin-top:0}.source-list a{color:#172d4a}.date-stamp{display:inline-block;font:800 11px var(--sans);letter-spacing:.07em;text-transform:uppercase;background:#e5b74b;padding:5px 8px}.quote-rule{padding:15px 18px;border:1px dashed #365d88;background:#fff}.micro-recall{columns:2;column-gap:36px}
+@media(max-width:670px){.thinker-grid,.comparison,.revision-grid{grid-template-columns:1fr}.micro-recall{columns:1}}
+@media print{.answer-blueprint>div{display:block!important}.answer-blueprint,.thinker-card,.debate,.concept-frame{break-inside:avoid}}

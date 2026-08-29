@@ -3,7 +3,8 @@ const path=require('path');
 const vm=require('vm');
 
 const root=path.resolve(__dirname,'..');
-const libraries=['Economics-Library','Geography-Library','History-Library'];
+const libraries=['Economics-Library','Geography-Library','History-Library','PSIR-Library'];
+const expectedBooks={'Economics-Library':12,'Geography-Library':12,'History-Library':13,'PSIR-Library':19};
 let failures=[];
 let grand={books:0,sections:0,words:0,questions:0,mains:0};
 
@@ -33,21 +34,39 @@ for(const library of libraries){
     }catch(error){failures.push(`${library}/${page}: ${error.message}`);continue;}
     const book=context.BOOKS?.[id];
     if(!book){failures.push(`${library}/${page}: no data for book ${id}`);continue;}
+    for(const [direction,target] of [['previous',book.prev],['next',book.next]]){
+      if(target&&!fs.existsSync(path.resolve(booksDir,target)))failures.push(`${library}/${page}: broken ${direction} book target ${target}`);
+    }
     if(!Array.isArray(book.sections)||book.sections.length<5)failures.push(`${library}/${page}: too few sections`);
+    const sectionIds=(book.sections||[]).map(section=>section.id);
+    if(library==='PSIR-Library'&&new Set(sectionIds).size!==sectionIds.length)failures.push(`${library}/${page}: duplicate section id`);
     if(!Array.isArray(book.recall)||book.recall.length<4)failures.push(`${library}/${page}: recall checkpoint missing`);
     const content=book.sections.map(s=>s.html||'').join(' ');
     const fullStudy=[book.title,book.dek,...book.sections.flatMap(s=>[s.title,s.html||'']),...(book.recall||[])].join(' ');
     const words=textWords(fullStudy);
     const questions=count(content,'practice-q');
     const mains=count(content,'class="answer-blueprint"')+count(content,'class="mains-blueprint"')+count(content,'class="blueprint"');
-    if(words<1000)failures.push(`${library}/${page}: only ${words} study words`);
-    if(library!=='Geography-Library'&&questions<5)failures.push(`${library}/${page}: only ${questions} explained practice items`);
+    const minimumWords=library==='PSIR-Library'?1300:1000;
+    if(words<minimumWords)failures.push(`${library}/${page}: only ${words} study words`);
+    if(library!=='Geography-Library'&&library!=='PSIR-Library'&&questions<5)failures.push(`${library}/${page}: only ${questions} explained practice items`);
+    if(library==='PSIR-Library'&&mains<4)failures.push(`${library}/${page}: only ${mains} Optional answer blueprints`);
     if(library!=='Geography-Library'&&mains<1)failures.push(`${library}/${page}: no Mains blueprint`);
     subtotal.books++;subtotal.sections+=book.sections.length;subtotal.words+=words;subtotal.questions+=questions;subtotal.mains+=mains;
   }
-  if(subtotal.books!==(library==='History-Library'?13:12))failures.push(`${library}: rendered ${subtotal.books} books`);
+  if(library==='PSIR-Library'){
+    const appSource=fs.readFileSync(path.join(root,library,'app.js'),'utf8');
+    const appBooks=[...appSource.matchAll(/\['(\d\d)','([^']+)'/g)].map(match=>({id:match[1],title:match[2]}));
+    if(appBooks.length!==expectedBooks[library])failures.push(`${library}: app lists ${appBooks.length} books`);
+    for(const appBook of appBooks){
+      const slug=appBook.title.toLowerCase().replaceAll('&','and').replaceAll(/[^a-z0-9]+/g,'-').replace(/-$/,'');
+      const target=`${appBook.id}-${slug}.html`;
+      if(!fs.existsSync(path.join(booksDir,target)))failures.push(`${library}: app route missing ${target}`);
+    }
+  }
+  if(subtotal.books!==expectedBooks[library])failures.push(`${library}: rendered ${subtotal.books} books`);
   if(library==='Geography-Library'&&subtotal.questions<250)failures.push(`${library}: subject practice bank is incomplete`);
   if(library==='Geography-Library'&&subtotal.mains<60)failures.push(`${library}: Mains blueprint programme is incomplete`);
+  if(library==='PSIR-Library'&&subtotal.mains<100)failures.push(`${library}: Optional answer-blueprint programme is incomplete`);
   Object.keys(grand).forEach(k=>grand[k]+=subtotal[k]);
   console.log(`${library}: ${subtotal.books} books · ${subtotal.sections} sections · ${subtotal.words.toLocaleString()} words · ${subtotal.questions} questions · ${subtotal.mains} Mains blueprints`);
 }
