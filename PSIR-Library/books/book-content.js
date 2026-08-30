@@ -8,7 +8,27 @@ const build=b=>{
  if(b.sources?.length)sections.push({id:'sources',title:'Primary sources and further reading',html:`<div class="source-list"><h3>Use selectively and argument-first</h3><ul>${b.sources.map(s=>`<li>${s.url?`<a href="${s.url}">${s.name}</a>`:s.name} — ${s.use}</li>`).join('')}</ul><p class="source-note">For every reading, capture the author’s problem, central claim, mechanism, criticism and one usable line of application. Do not collect quotations without arguments.</p></div>`});
  window.BOOKS[b.id]={title:b.title,kicker:b.kicker,dek:b.dek,prev:b.prev||null,next:b.next||null,sections,recall:b.recall||[]};
 };
-window.PSIR={build};
+const enrich=(id,addition)=>{
+ const book=window.BOOKS[id];
+ if(!book)throw new Error(`Cannot enrich missing PSIR book ${id}`);
+ const incoming=addition.sections||[];
+ const known=new Set(book.sections.map(section=>section.id));
+ for(const section of incoming){
+  if(known.has(section.id))throw new Error(`Duplicate section ${section.id} in PSIR book ${id}`);
+  known.add(section.id);
+ }
+ const insertionPoint=book.sections.findIndex(section=>section.id==='answer-practice');
+ book.sections.splice(insertionPoint<0?book.sections.length:insertionPoint,0,...incoming);
+ if(addition.prompts?.length){
+  const practiceId=addition.practiceId||'advanced-answer-practice';
+  if(known.has(practiceId))throw new Error(`Duplicate section ${practiceId} in PSIR book ${id}`);
+  const practice={id:practiceId,title:addition.practiceTitle||'Advanced answer practice',html:`<p>These audited questions target the additional depth required by recent UPSC papers. Draft the thesis and evidence route before opening the blueprint.</p>${addition.prompts.map(blueprint).join('')}`};
+  const revisionPoint=book.sections.findIndex(section=>section.id==='revision');
+  book.sections.splice(revisionPoint<0?book.sections.length:revisionPoint,0,practice);
+ }
+ if(addition.recall?.length)book.recall.push(...addition.recall);
+};
+window.PSIR={build,enrich};
 })();
 PSIR.build({id:'01',title:'Syllabus & Master Roadmap',kicker:'Book 01 · Orientation',dek:'The official 2026 syllabus decoded into nineteen books, four learning phases and a repeatable Optional answer system.',next:'02-political-theory-and-theories-of-the-state.html',objectives:['Map every Paper I and Paper II phrase to one primary book and its cross-links.','Understand the honours-degree depth expected from Optional answers.','Build a sixteen-week first cycle and continuing revision cycle.','Separate evergreen theory, institutional evidence and dated international developments.'],syllabus:'UPSC PSIR consists of Paper I—Political Theory and Indian Politics—and Paper II—Comparative Politics and International Relations. Each Optional paper carries 250 marks and is conventional/essay type. The 2026 notification describes Optional depth broadly as honours-degree level.',sections:[
 {id:'paper-map',title:'The complete syllabus-to-book map',html:`<table><tr><th>Official cluster</th><th>Books</th><th>Required output</th></tr><tr><td>Paper I-A: political theory and thought</td><td>2–6</td><td>Define, compare traditions, use thinkers, criticise and apply.</td></tr><tr><td>Paper I-B: Indian government and politics</td><td>7–9</td><td>Join constitutional design, actual working, social structure and political change.</td></tr><tr><td>Paper II-A: comparative politics and IR</td><td>10–13</td><td>Use approaches and concepts to explain institutions, order and global transformations.</td></tr><tr><td>Paper II-B: India and the world</td><td>14–17</td><td>Balance history, strategic interests, domestic determinants and current evidence.</td></tr><tr><td>Exam conversion</td><td>18–19</td><td>Decode recurring demands, write under time and evaluate argument quality.</td></tr></table><p>The syllabus has cross-links. Power connects Gramsci, caste and international hegemony; justice connects Rawls, Ambedkar and welfare; federalism connects institutional design with identity; strategic autonomy connects non-alignment with present multi-alignment. Build these bridges deliberately.</p>`},

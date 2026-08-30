@@ -1,7 +1,9 @@
 const id=document.body.dataset.book;
-const book=window.BOOKS?.[id];
+const depthSource=id>='02'&&id<='06'?'psir-paper1a-depth.js':id>='07'&&id<='09'?'psir-paper1b-depth.js':id>='10'&&id<='13'?'psir-paper2a-depth.js':id>='14'&&id<='17'?'psir-paper2b-depth.js':id>='18'?'psir-exam-depth.js':null;
 
-if(book){
+const renderBook=()=>{
+ const book=window.BOOKS?.[id];
+ if(book){
   document.title=`${book.title} · Rajneeti`;
   const toc=document.querySelector('#toc');
   const article=document.querySelector('#article');
@@ -18,9 +20,20 @@ if(book){
     }
   },{rootMargin:'-20% 0px -70%'});
   document.querySelectorAll('.book-section').forEach(section=>observer.observe(section));
-}else{
+ }else{
   document.querySelector('#article').innerHTML='<section class="book-section"><h1>Book data could not be loaded</h1><p>Return to the library and reopen this book. If the problem continues, refresh the page.</p><p><a href="../index.html#library">← Return to all books</a></p></section>';
-}
+ }
+};
+
+if(depthSource){
+ const depthScript=document.createElement('script');
+ depthScript.src=`${depthSource}?v=20260830`;
+ depthScript.addEventListener('load',renderBook);
+ depthScript.addEventListener('error',()=>{
+  document.querySelector('#article').innerHTML='<section class="book-section"><h1>Depth material could not be loaded</h1><p>Refresh this page. If the problem continues, return to the library and reopen the book.</p></section>';
+ });
+ document.head.append(depthScript);
+}else renderBook();
 
 addEventListener('scroll',()=>{
   const root=document.documentElement;

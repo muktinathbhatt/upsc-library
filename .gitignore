@@ -1,2 +1,5 @@
 # Local source material; keep out of Git and GitHub.
 NCERT/
+
+# Local audit and render scratch files.
+tmp/
