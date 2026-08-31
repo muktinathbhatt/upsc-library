@@ -203,7 +203,7 @@ const textNodesFor=container=>{
  const nodes=[];
  const walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT,{acceptNode:node=>{
   if(!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
-  if(node.parentElement.closest('.sentence-expansion,.sentence-explain-link,script,style,button'))return NodeFilter.FILTER_REJECT;
+  if(node.parentElement.closest('.sentence-expansion,.sentence-explain-link,.beginner-visual-map,script,style,button'))return NodeFilter.FILTER_REJECT;
   return NodeFilter.FILTER_ACCEPT;
  }});
  while(walker.nextNode())nodes.push(walker.currentNode);

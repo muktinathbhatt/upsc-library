@@ -14,6 +14,19 @@ const activateSentenceNotes=article=>{
  document.head.append(notesScript);
 };
 
+let beginnerVisualsLoading=false;
+const activateBeginnerVisuals=(article,book)=>{
+ const applyVisuals=()=>window.BeginnerLibraryVisuals?.apply(article,{subject:'psir',sections:book.sections});
+ if(window.BeginnerLibraryVisuals)return applyVisuals();
+ if(beginnerVisualsLoading)return;
+ beginnerVisualsLoading=true;
+ const visualScript=document.createElement('script');
+ visualScript.src='../../shared/beginner-library-visuals.js?v=20260831';
+ visualScript.addEventListener('load',applyVisuals);
+ visualScript.addEventListener('error',()=>{beginnerVisualsLoading=false;});
+ document.head.append(visualScript);
+};
+
 const renderBook=()=>{
  const book=window.BOOKS?.[id];
  if(book){
@@ -33,6 +46,7 @@ const renderBook=()=>{
     }
   },{rootMargin:'-20% 0px -70%'});
   document.querySelectorAll('.book-section').forEach(section=>observer.observe(section));
+  activateBeginnerVisuals(article,book);
   activateSentenceNotes(article);
  }else{
   document.querySelector('#article').innerHTML='<section class="book-section"><h1>Book data could not be loaded</h1><p>Return to the library and reopen this book. If the problem continues, refresh the page.</p><p><a href="../index.html#library">← Return to all books</a></p></section>';

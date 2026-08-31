@@ -37,6 +37,16 @@ else{
   }catch(error){failures.push(`Shared sentence-explanation layer failed to load — ${error.message}`);}
 }
 
+const visualsPath=path.join(root,'shared','beginner-library-visuals.js');
+if(!fs.existsSync(visualsPath))failures.push('Shared fresher visual-learning layer is missing');
+else{
+  try{
+    const visualContext={};visualContext.window=visualContext;vm.createContext(visualContext);
+    vm.runInContext(fs.readFileSync(visualsPath,'utf8'),visualContext,{filename:visualsPath});
+    if(typeof visualContext.BeginnerLibraryVisuals?.apply!=='function')failures.push('Shared fresher visual-learning layer cannot be applied');
+  }catch(error){failures.push(`Shared fresher visual-learning layer failed to load — ${error.message}`);}
+}
+
 function count(haystack,needle){return haystack.split(needle).length-1;}
 function textWords(html){return html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&[a-z0-9#]+;/gi,' ').trim().split(/\s+/).filter(Boolean).length;}
 
@@ -44,6 +54,7 @@ for(const library of libraries){
   const booksDir=path.join(root,library,'books');
   const readerPath=path.join(booksDir,'reader.js');
   if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/sentence-notes.js'))failures.push(`${library}: reader is not connected to the shared sentence-explanation layer`);
+  if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/beginner-library-visuals.js'))failures.push(`${library}: reader is not connected to the shared fresher visual-learning layer`);
   const pages=fs.readdirSync(booksDir).filter(f=>/^\d\d-.*\.html$/.test(f));
   const seen=new Set();
   const subtotal={books:0,sections:0,words:0,questions:0,mains:0,models:0};
