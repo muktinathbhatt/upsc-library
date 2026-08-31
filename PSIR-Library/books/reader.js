@@ -3,12 +3,12 @@ const depthSource=id>='02'&&id<='06'?'psir-paper1a-depth.js':id>='07'&&id<='09'?
 let sentenceNotesLoading=false;
 
 const activateSentenceNotes=article=>{
- const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:id});
+ const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:id,subject:'psir'});
  if(window.SentenceNotes)return applyNotes();
  if(sentenceNotesLoading)return;
  sentenceNotesLoading=true;
  const notesScript=document.createElement('script');
- notesScript.src='../../shared/sentence-notes.js?v=20260831-words';
+ notesScript.src='../../shared/sentence-notes.js?v=20260831-terms';
  notesScript.addEventListener('load',applyNotes);
  notesScript.addEventListener('error',()=>{sentenceNotesLoading=false;});
  document.head.append(notesScript);

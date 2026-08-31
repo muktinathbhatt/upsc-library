@@ -1,8 +1,8 @@
 const id=document.body.dataset.book,book=window.BOOKS?.[id];
 const activateSentenceNotes=article=>{
- const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:`geography-${id}`});
+ const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:`geography-${id}`,subject:'geography'});
  if(window.SentenceNotes)return applyNotes();
- const script=document.createElement('script');script.src='../../shared/sentence-notes.js?v=20260831-words';
+ const script=document.createElement('script');script.src='../../shared/sentence-notes.js?v=20260831-terms';
  script.addEventListener('load',applyNotes);document.head.append(script);
 };
 if(book){

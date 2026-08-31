@@ -10,7 +10,7 @@ const concepts=[
  {terms:['power'],label:'Power',note:'The capacity to shape conduct, agendas, preferences or structures, including without a visible command.',example:'Lukes adds agenda control and preference formation to observable decision-making.',skip:/\b(purchasing power|power sector|electric power|thermal power|wind power|hydropower|power generation)\b/i},
  {terms:['authority'],label:'Authority',note:'Power regarded as having a valid claim to obedience; it therefore joins capacity with justification.',example:'A lawful order may possess authority even when coercion is not used.'},
  {terms:['legitimacy'],label:'Legitimacy',note:'The justified or socially accepted right to rule, distinct from legality and mere effectiveness.',example:'A regime can be effective yet face a legitimacy deficit.'},
- {terms:['state'],label:'State',note:'A territorially organised structure of public authority claiming supremacy and maintaining institutions of rule.',example:'State capacity, autonomy and social embeddedness are separate analytical dimensions.'},
+ {terms:['state'],label:'State',note:'A territorially organised structure of public authority claiming supremacy and maintaining institutions of rule.',example:'State capacity, autonomy and social embeddedness are separate analytical dimensions.',subjects:['psir']},
  {terms:['sovereignty'],label:'Sovereignty',note:'Supreme public authority internally and juridical independence externally, both constrained in practice by interdependence.',example:'International obligations qualify policy freedom without automatically abolishing state sovereignty.'},
  {terms:['democracy'],label:'Democracy',note:'A system of political equality and public control whose models differ over participation, competition, deliberation and social conditions.',example:'Competitive elections are necessary but do not exhaust democratic accountability.'},
  {terms:['representation'],label:'Representation',note:'The process through which actors make citizens, interests or identities present in decision-making.',example:'Delegate, trustee, descriptive and substantive representation answer different questions.'},
@@ -43,6 +43,14 @@ const concepts=[
  {terms:['political economy'],label:'Political economy',note:'The reciprocal shaping of markets, property, production and distribution by institutions and power.',example:'Economic reform creates political coalitions and conflicts rather than operating as a technical adjustment alone.'},
  {terms:['development'],label:'Development',note:'A contested transformation involving productive capacity, welfare, freedom, sustainability and the distribution of power.',example:'Growth can raise aggregate income without ensuring capabilities or ecological security.'},
  {terms:['globalisation','globalization'],label:'Globalisation',note:'The intensification of cross-border flows and rule-making whose depth, reach and distribution vary by domain.',example:'Interdependence constrains states unevenly rather than making every state powerless.'},
+ {terms:['demand'],label:'Demand',note:'The quantities buyers are willing and able to purchase at different prices, other things equal.',example:'A change in price moves along demand; income or tastes can shift the entire curve.',subjects:['economics']},
+ {terms:['supply'],label:'Supply',note:'The quantities sellers are willing to offer at different prices, other things equal.',example:'Input costs, technology and taxes can shift supply.',subjects:['economics']},
+ {terms:['equilibrium'],label:'Market equilibrium',note:'The price and quantity at which intended demand equals intended supply.',example:'A shock produces pressure for adjustment when buyers’ and sellers’ plans do not match.',subjects:['economics']},
+ {terms:['price ceiling'],label:'Price ceiling',note:'A legal maximum price; when set below equilibrium it can create excess demand or shortage.',example:'Its outcome depends on enforcement, rationing and whether supply responds.',subjects:['economics']},
+ {terms:['price floor'],label:'Price floor',note:'A legal minimum price; when set above equilibrium it can create excess supply or surplus.',example:'The surplus may persist unless buyers, storage or public procurement absorb it.',subjects:['economics']},
+ {terms:['elasticity','elastic'],label:'Elasticity',note:'The responsiveness of one variable to a change in another, commonly quantity demanded or supplied to price.',example:'More substitutes generally make demand more price-elastic.',subjects:['economics']},
+ {terms:['tax incidence'],label:'Tax incidence',note:'The actual distribution of a tax burden between buyers and sellers, determined by relative elasticities rather than legal payment alone.',example:'The less elastic side generally bears more of the burden.',subjects:['economics']},
+ {terms:['state capacity'],label:'State capacity',note:'The ability of public institutions to diagnose, coordinate, implement, learn and enforce policy.',example:'A policy can be well designed yet fail without staff, information, finance and feedback.',subjects:['economics','psir']},
  {terms:['scarcity'],label:'Scarcity',note:'The condition in which available resources cannot satisfy every competing use, making choice and trade-offs unavoidable.',example:'Using land for housing can foreclose agricultural or ecological uses.'},
  {terms:['opportunity cost'],label:'Opportunity cost',note:'The value of the best alternative forgone when a choice is made.',example:'Public spending on one programme limits the resources available for another use.'},
  {terms:['market failure'],label:'Market failure',note:'A situation in which decentralised market choices do not produce an efficient or socially acceptable outcome.',example:'Pollution, monopoly power and public goods can justify carefully designed public action.'},
@@ -130,7 +138,7 @@ const concepts=[
 ];
 
 const termPattern=term=>new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')}([^a-z0-9]|$)`,'i');
-const conceptsFor=sentence=>concepts.filter(concept=>(!concept.when||concept.when.test(sentence))&&(!concept.skip||!concept.skip.test(sentence))&&concept.terms.some(term=>termPattern(term).test(sentence))).slice(0,4);
+const conceptsFor=(sentence,subject='')=>concepts.filter(concept=>(!concept.subjects||concept.subjects.includes(subject))&&(!concept.when||concept.when.test(sentence))&&(!concept.skip||!concept.skip.test(sentence))&&concept.terms.some(term=>termPattern(term).test(sentence))).slice(0,4);
 const buildExpansion=(panel,matches)=>{
  if(panel.dataset.ready)return;
  panel.dataset.ready='true';
@@ -181,7 +189,7 @@ const annotateContainer=(container,state)=>{
  }).filter(item=>item.sentence.length>=20&&(item.sentence.match(/[A-Za-zÀ-ÿ]+/g)||[]).length>=4);
  let count=0;
  for(const item of candidates.reverse()){
-  const matches=conceptsFor(item.sentence);
+  const matches=conceptsFor(item.sentence,state.subject);
   if(!matches.length)continue;
   const start=locate(nodes,item.start),end=locate(nodes,item.end);
   if(!start.node||!end.node)continue;
@@ -201,8 +209,8 @@ const annotateContainer=(container,state)=>{
  return count;
 };
 
-const apply=(root,{bookId='00'}={})=>{
- const state={bookId,counter:0};
+const apply=(root,{bookId='00',subject=''}={})=>{
+ const state={bookId,subject,counter:0};
  const selector='.book-head .dek,.book-section p,.book-section li,.book-section td,.book-section th,.book-section .chain,.book-section .formula,.book-section .argument-chain,.book-section .comparison>div,.book-section .revision-grid>div,.book-section .thinker-card,.book-section .why,.recall li';
  let total=0;root.querySelectorAll(selector).forEach(container=>{total+=annotateContainer(container,state)});
  const meta=root.querySelector('.book-meta');
@@ -219,6 +227,6 @@ document.addEventListener('keydown',event=>{
   panel.hidden=true;const link=document.querySelector(`[aria-controls="${panel.id}"]`);if(link){link.setAttribute('aria-expanded','false');link.textContent='explain';}
  });
 });
-const inspect=sentence=>({concepts:conceptsFor(sentence).map(concept=>concept.label)});
+const inspect=(sentence,subject='')=>({concepts:conceptsFor(sentence,subject).map(concept=>concept.label)});
 window.SentenceNotes={apply,inspect};
 })();

@@ -17,15 +17,17 @@ else{
     const notesSource=fs.readFileSync(notesPath,'utf8');
     if(['Analytical role','Answer move','Recall check','Meaning in context'].some(label=>notesSource.includes(label)))failures.push('Sentence explanations include material beyond word definitions');
     const acceptance=[
-      ['Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.',['Need','Desert','Equality','Entitlement']],
-      ['Inflation redistributes purchasing power and affects poorer households disproportionately.',['Inflation']],
-      ['The monsoon is a seasonally reversing wind and rainfall system.',['Monsoon']],
-      ['Colonialism reorganised economy, knowledge and institutions for metropolitan power.',['Colonialism']]
+      ['Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.','psir',['Need','Desert','Equality','Entitlement']],
+      ['Inflation redistributes purchasing power and affects poorer households disproportionately.','economics',['Inflation']],
+      ['The monsoon is a seasonally reversing wind and rainfall system.','geography',['Monsoon']],
+      ['Colonialism reorganised economy, knowledge and institutions for metropolitan power.','history',['Colonialism']],
+      ['Equilibrium is where intended demand equals intended supply.','economics',['Demand','Supply','Market equilibrium']]
     ];
-    for(const [sentence,required] of acceptance){
-      const sample=notesContext.SentenceNotes?.inspect(sentence);
+    for(const [sentence,subject,required] of acceptance){
+      const sample=notesContext.SentenceNotes?.inspect(sentence,subject);
       if(required.some(term=>!sample?.concepts.includes(term)))failures.push(`Sentence explanation does not unpack its acceptance test: ${required.join(', ')}`);
     }
+    if(notesContext.SentenceNotes?.inspect('A binding price ceiling below equilibrium causes shortage; a binding floor above it causes surplus, unless the state purchases the excess.','economics').concepts.includes('State'))failures.push('Economics explanation incorrectly presents the PSIR meaning of state');
   }catch(error){failures.push(`Shared sentence-explanation layer failed to load — ${error.message}`);}
 }
 
