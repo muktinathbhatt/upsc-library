@@ -27,6 +27,10 @@ else{
       const sample=notesContext.SentenceNotes?.inspect(sentence,subject);
       if(required.some(term=>!sample?.concepts.includes(term)))failures.push(`Sentence explanation does not unpack its acceptance test: ${required.join(', ')}`);
     }
+    const equilibriumExplanation=notesContext.SentenceNotes?.inspect('Equilibrium is where intended demand equals intended supply.','economics').explanation||'';
+    if(!/market-clearing point/i.test(equilibriumExplanation))failures.push('Economics equilibrium explanation is not a contextual explanation');
+    const taxExplanation=notesContext.SentenceNotes?.inspect('Tax incidence falls more heavily on the less elastic side of a market.','economics').explanation||'';
+    if(!/legal payer|statutory remittance/i.test(taxExplanation))failures.push('Economics tax-incidence explanation is not a contextual explanation');
     if(notesContext.SentenceNotes?.inspect('A binding price ceiling below equilibrium causes shortage; a binding floor above it causes surplus, unless the state purchases the excess.','economics').concepts.includes('State'))failures.push('Economics explanation incorrectly presents the PSIR meaning of state');
   }catch(error){failures.push(`Shared sentence-explanation layer failed to load — ${error.message}`);}
 }

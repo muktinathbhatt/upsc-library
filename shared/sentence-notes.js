@@ -139,15 +139,40 @@ const concepts=[
 
 const termPattern=term=>new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')}([^a-z0-9]|$)`,'i');
 const conceptsFor=(sentence,subject='')=>concepts.filter(concept=>(!concept.subjects||concept.subjects.includes(subject))&&(!concept.when||concept.when.test(sentence))&&(!concept.skip||!concept.skip.test(sentence))&&concept.terms.some(term=>termPattern(term).test(sentence))).slice(0,4);
-const buildExpansion=(panel,matches)=>{
+const sentenceGuides=[
+ {subject:'economics',when:/^Demand is the quantity buyers are willing and able to purchase at different prices/i,text:'Demand is more than a wish to buy: it requires both willingness and purchasing ability. Think of it as a schedule of possible purchases at different prices. “Other things equal” holds income, tastes and related-goods prices steady so that the effect of price itself can be isolated.'},
+ {subject:'economics',when:/^A price change causes movement along the curve/i,text:'This separates two commonly confused changes. If only the good’s own price changes, the buyer moves to another point on the existing demand curve. If income, tastes, expectations, population or the price of a related good changes, willingness to buy changes at every price and the whole curve shifts.'},
+ {subject:'economics',when:/^Supply is the quantity sellers offer at different prices/i,text:'Supply, like demand, is a schedule rather than a single fixed quantity. A higher price may make additional production worthwhile, but the amount firms can offer also depends on their costs, technology and expectations.'},
+ {subject:'economics',when:/^Technology, input costs, taxes, subsidies, expectations and the number of firms shift supply/i,text:'These factors change the cost or capacity of production. Therefore they alter how much firms are prepared to sell at every possible price; that is a shift of supply, not a movement along the same supply curve.'},
+ {subject:'economics',when:/^Equilibrium is where intended demand equals intended supply/i,text:'Equilibrium is the market-clearing point: buyers’ planned purchases and sellers’ planned sales match. It is not a moral ideal or a price chosen by government. Below it, intended demand tends to exceed supply; above it, intended supply tends to exceed demand, creating pressure for adjustment.'},
+ {subject:'economics',when:/^A binding price ceiling below equilibrium causes shortage/i,text:'A ceiling is “binding” only when it prevents price from rising to the market-clearing level. At the capped price, more people want to buy than firms want to sell, so the shortage is rationed through queues, waiting, favouritism or informal prices. A floor set above equilibrium does the reverse: suppliers offer more than buyers purchase. Public procurement can absorb the surplus, but it shifts the cost to the public budget and storage system.'},
+ {subject:'economics',when:/^Price elasticity of demand =/i,text:'The formula measures responsiveness, not the direction of demand. A value greater than one means quantity changes proportionately more than price; a value below one means it changes proportionately less. Percentage changes make the measure comparable across goods with different units and price levels.'},
+ {subject:'economics',when:/^Elasticity depends on substitutes, necessity, budget share and time/i,text:'These conditions determine how easily buyers can adjust. Close substitutes and more time make switching easier, raising elasticity; a necessity or a small budget share makes adjustment harder, lowering it. That is why an inelastic demand can make a price rise increase total spending even as quantity falls.'},
+ {subject:'economics',when:/^Tax incidence falls more heavily on the less elastic side/i,text:'The legal payer of a tax is not necessarily the person who bears its economic burden. The side with fewer alternatives adjusts quantity less easily and therefore absorbs more of the price change. In an answer, distinguish statutory remittance from economic incidence and explain the relative elasticities.'}
+];
+const namesFor=matches=>matches.map(concept=>concept.label).join(matches.length===2?' and ':', ');
+const generalGuide=(matches)=>{
+ const names=namesFor(matches);
+ if(matches.length===1)return `The sentence uses ${names} to make an analytical claim, not merely to name a term. Read it by asking what produces the condition, how it works, and what consequence follows in the situation being discussed.`;
+ return `The sentence connects ${names}. Read these as parts of one explanation: identify the relationship between them, then trace the consequence rather than treating each term as an isolated definition.`;
+};
+const guideFor=(sentence,matches,subject)=>sentenceGuides.find(guide=>(!guide.subject||guide.subject===subject)&&guide.when.test(sentence))?.text||generalGuide(matches);
+const buildExpansion=(panel,matches,sentence,subject)=>{
  if(panel.dataset.ready)return;
  panel.dataset.ready='true';
- const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Words in this sentence';panel.append(title);
+ const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Explanation in context';panel.append(title);
+ const explanation=document.createElement('span');explanation.className='sentence-expansion-row';
+ const label=document.createElement('b');label.textContent='What this sentence means: ';
+ explanation.append(label,document.createTextNode(guideFor(sentence,matches,subject)));panel.append(explanation);
  const group=document.createElement('span');group.className='sentence-concepts';
  for(const concept of matches){
   const item=document.createElement('span');item.className='sentence-concept';
   const name=document.createElement('b');name.textContent=concept.label;
-  item.append(name,document.createTextNode(` — ${concept.note}`));group.append(item);
+  const core=document.createElement('span');core.className='sentence-expansion-row';core.append(name,document.createTextNode(` — ${concept.note}`));
+  const application=document.createElement('span');application.className='sentence-expansion-row';
+  const applicationLabel=document.createElement('b');applicationLabel.textContent='Use it: ';
+  application.append(applicationLabel,document.createTextNode(concept.example));
+  item.append(core,application);group.append(item);
  }
  panel.append(group);
 };
@@ -201,7 +226,7 @@ const annotateContainer=(container,state)=>{
   const panel=document.createElement('span');panel.className='sentence-expansion';panel.id=noteId;panel.hidden=true;panel.setAttribute('role','note');
   link.addEventListener('click',event=>{
    event.preventDefault();const opening=panel.hidden;
-   if(opening)buildExpansion(panel,matches);
+   if(opening)buildExpansion(panel,matches,item.sentence,state.subject);
    panel.hidden=!opening;link.setAttribute('aria-expanded',String(opening));link.textContent=opening?'hide':'explain';
   });
   unit.append(document.createTextNode(' '),link,panel);range.insertNode(unit);count++;
@@ -215,7 +240,7 @@ const apply=(root,{bookId='00',subject=''}={})=>{
  let total=0;root.querySelectorAll(selector).forEach(container=>{total+=annotateContainer(container,state)});
  const meta=root.querySelector('.book-meta');
  if(meta){
-  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} word explanations`;count.title='Select “explain” after a sentence to see definitions of the terms it contains.';meta.append(count);
+  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} contextual explanations`;count.title='Select “explain” after a sentence to unpack its meaning, mechanism and relevant terms.';meta.append(count);
  }
  root.dataset.sentenceExplanations=String(total);
  return total;
@@ -227,6 +252,6 @@ document.addEventListener('keydown',event=>{
   panel.hidden=true;const link=document.querySelector(`[aria-controls="${panel.id}"]`);if(link){link.setAttribute('aria-expanded','false');link.textContent='explain';}
  });
 });
-const inspect=(sentence,subject='')=>({concepts:conceptsFor(sentence,subject).map(concept=>concept.label)});
+const inspect=(sentence,subject='')=>{const matches=conceptsFor(sentence,subject);return {concepts:matches.map(concept=>concept.label),explanation:guideFor(sentence,matches,subject)};};
 window.SentenceNotes={apply,inspect};
 })();
