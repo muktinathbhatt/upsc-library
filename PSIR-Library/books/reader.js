@@ -8,7 +8,7 @@ const activateSentenceNotes=article=>{
  if(sentenceNotesLoading)return;
  sentenceNotesLoading=true;
  const notesScript=document.createElement('script');
-  notesScript.src='../../shared/sentence-notes.js?v=20260831-freshers';
+  notesScript.src='../../shared/sentence-notes.js?v=20260831-ste100';
  notesScript.addEventListener('load',applyNotes);
  notesScript.addEventListener('error',()=>{sentenceNotesLoading=false;});
  document.head.append(notesScript);
