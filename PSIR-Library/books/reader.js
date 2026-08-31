@@ -1,5 +1,18 @@
 const id=document.body.dataset.book;
 const depthSource=id>='02'&&id<='06'?'psir-paper1a-depth.js':id>='07'&&id<='09'?'psir-paper1b-depth.js':id>='10'&&id<='13'?'psir-paper2a-depth.js':id>='14'&&id<='17'?'psir-paper2b-depth.js':id>='18'?'psir-exam-depth.js':null;
+let sentenceNotesLoading=false;
+
+const activateSentenceNotes=article=>{
+ const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:id});
+ if(window.SentenceNotes)return applyNotes();
+ if(sentenceNotesLoading)return;
+ sentenceNotesLoading=true;
+ const notesScript=document.createElement('script');
+ notesScript.src='sentence-notes.js?v=20260831';
+ notesScript.addEventListener('load',applyNotes);
+ notesScript.addEventListener('error',()=>{sentenceNotesLoading=false;});
+ document.head.append(notesScript);
+};
 
 const renderBook=()=>{
  const book=window.BOOKS?.[id];
@@ -20,6 +33,7 @@ const renderBook=()=>{
     }
   },{rootMargin:'-20% 0px -70%'});
   document.querySelectorAll('.book-section').forEach(section=>observer.observe(section));
+  activateSentenceNotes(article);
  }else{
   document.querySelector('#article').innerHTML='<section class="book-section"><h1>Book data could not be loaded</h1><p>Return to the library and reopen this book. If the problem continues, refresh the page.</p><p><a href="../index.html#library">← Return to all books</a></p></section>';
  }

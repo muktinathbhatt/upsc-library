@@ -71,6 +71,17 @@ for(const library of libraries){
       const target=`${appBook.id}-${slug}.html`;
       if(!fs.existsSync(path.join(booksDir,target)))failures.push(`${library}: app route missing ${target}`);
     }
+    const notesPath=path.join(booksDir,'sentence-notes.js');
+    if(!fs.existsSync(notesPath))failures.push(`${library}: hidden sentence-explanation layer is missing`);
+    else{
+      try{
+        const notesContext={console,document:{addEventListener(){}}};notesContext.window=notesContext;vm.createContext(notesContext);
+        vm.runInContext(fs.readFileSync(notesPath,'utf8'),notesContext,{filename:notesPath});
+        const sample=notesContext.SentenceNotes?.inspect('Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.');
+        const required=['Need','Desert','Equality','Entitlement'];
+        if(sample?.role!=='Distinction or comparison'||required.some(term=>!sample?.concepts.includes(term)))failures.push(`${library}: sentence explanation does not unpack the distributive-criteria acceptance test`);
+      }catch(error){failures.push(`${library}: sentence-explanation layer failed to load — ${error.message}`);}
+    }
   }
   if(subtotal.books!==expectedBooks[library])failures.push(`${library}: rendered ${subtotal.books} books`);
   if(library==='Geography-Library'&&subtotal.questions<250)failures.push(`${library}: subject practice bank is incomplete`);

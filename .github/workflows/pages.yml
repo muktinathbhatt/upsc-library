@@ -27,6 +27,8 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Validate study libraries
+        run: node scripts/validate-libraries.js
       - name: Prepare website
         run: |
           mkdir _site
