@@ -2,7 +2,7 @@ const id=document.body.dataset.book,book=window.BOOKS?.[id];
 const activateSentenceNotes=article=>{
  const applyNotes=()=>window.SentenceNotes?.apply(article,{bookId:`history-${id}`,subject:'history'});
  if(window.SentenceNotes)return applyNotes();
- const script=document.createElement('script');script.src='../../shared/sentence-notes.js?v=20260831-paragraph-notes';
+ const script=document.createElement('script');script.src='../../shared/sentence-notes.js?v=20260831-hidden-prose';
  script.addEventListener('load',applyNotes);document.head.append(script);
 };
 const activateBeginnerVisuals=article=>{
