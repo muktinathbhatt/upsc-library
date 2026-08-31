@@ -14,6 +14,8 @@ else{
   try{
     const notesContext={console,document:{addEventListener(){}}};notesContext.window=notesContext;vm.createContext(notesContext);
     vm.runInContext(fs.readFileSync(notesPath,'utf8'),notesContext,{filename:notesPath});
+    const notesSource=fs.readFileSync(notesPath,'utf8');
+    if(['Analytical role','Answer move','Recall check','Meaning in context'].some(label=>notesSource.includes(label)))failures.push('Sentence explanations include material beyond word definitions');
     const acceptance=[
       ['Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.',['Need','Desert','Equality','Entitlement']],
       ['Inflation redistributes purchasing power and affects poorer households disproportionately.',['Inflation']],

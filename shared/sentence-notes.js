@@ -129,54 +129,19 @@ const concepts=[
  {terms:['machiavelli'],label:'Niccolò Machiavelli',note:'Machiavelli studies effective political founding and preservation amid contingency, conflict and the limits of conventional morality.',example:'Virtù is adaptive political capacity, not simply private virtue.'}
 ];
 
-const roles={
- contrast:{label:'Distinction or comparison',explain:'The sentence separates neighbouring ideas or sets rival explanations against a common standard. Its value lies in preserving the difference rather than merely naming both sides.',use:'Define each side, compare them on one explicit axis, show how they yield different conclusions, and then state where the distinction is most useful.',check:'What analytical error follows if the contrasted terms are treated as synonyms?'},
- causal:{label:'Causal or explanatory claim',explain:'The sentence proposes a connection between conditions, mechanisms and outcomes. It should be read as an explanation that may depend on scope conditions, not as a bare sequence of events.',use:'Identify the outcome, name the mechanism, add the condition under which it operates, and test it against one rival explanation or case.',check:'What mechanism connects the proposed cause to the outcome, and when might it fail?'},
- normative:{label:'Normative claim',explain:'The sentence evaluates an institution or distribution by invoking a value, criterion or duty. The conclusion depends on why that standard should govern.',use:'State the value, identify the affected subjects and duty-bearer, expose the trade-off, and defend a qualified criterion of judgement.',check:'Which moral criterion is doing the work, and who gains or bears the burden?'},
- scholar:{label:'Thinker or theoretical proposition',explain:'The sentence attributes an argument to a thinker or tradition. The name matters only when the underlying problem, proposition and mechanism are reconstructed accurately.',use:'Present the thinker’s problem, central proposition and mechanism; add one criticism or comparison and one contemporary application.',check:'Could you explain the argument without relying on the thinker’s name as a substitute for reasoning?'},
- evidence:{label:'Empirical or institutional evidence',explain:'The sentence supplies a dated event, legal provision, institution or case. Evidence establishes a limited proposition and must not be made to prove more than the source supports.',use:'Attach the date or authority, say exactly what the evidence demonstrates, distinguish rule from actual working, and acknowledge any inference.',check:'What does this evidence prove—and what does it leave unproven?'},
- qualification:{label:'Qualification or criticism',explain:'The sentence limits a wider claim, introduces a counter-argument or identifies a condition. It prevents an absolute conclusion without necessarily rejecting the main argument.',use:'Use it after the main claim, specify the precise limitation, and conclude by stating what survives the criticism and under what conditions.',check:'Does the qualification overturn the claim, narrow its scope, or reveal a missing variable?'},
- definition:{label:'Definition or conceptual frame',explain:'The sentence fixes the meaning and boundaries of a concept. A strong definition identifies the core feature and separates the concept from close neighbours.',use:'Open with the definition, clarify one boundary or dimension, and then convert it into an analytical test for the question.',check:'Which neighbouring concept must be distinguished to keep this definition precise?'},
- proposition:{label:'Analytical proposition',explain:'The sentence states a claim that should organise reasoning rather than be memorised in isolation. Its significance comes from the problem it answers and the evidence or comparison that can test it.',use:'Turn it into a thesis, supply a reason or mechanism, add a scholar or case, consider a counter-position, and finish with a conditional judgement.',check:'What reason and evidence would you use to defend this proposition under exam conditions?'}
-};
-
-const classify=sentence=>{
- const s=sentence.toLowerCase();
- if(/\b(rather than|whereas|unlike|distinguish(?:es|ed)?|contrast|versus|not the same|cannot be reduced|should not be confused|different from)\b/.test(s))return 'contrast';
- if(/\b(according to|argues?|contends?|maintains?|for rawls|for marx|for gramsci|for arendt|for gandhi|for ambedkar|theory|tradition)\b/.test(s))return 'scholar';
- if(/\b(article\s+\d+|amendment|act\b|judg(?:e)?ment|commission|committee|court|parliament|election|treaty|declaration|resolution|in \d{4}|\d{4})\b/.test(s))return 'evidence';
- if(/\b(because|therefore|thus|hence|produces?|causes?|leads? to|results? in|depends? on|through which|mechanism|explains?)\b/.test(s))return 'causal';
- if(/\b(however|although|yet\b|but\b|nevertheless|critique|criticism|limitation|problematic|may fail|does not automatically|not necessarily|risks?)\b/.test(s))return 'qualification';
- if(/\b(should|ought|must|just\b|unjust|fair|legitimate|desirable|duty|moral|normative)\b/.test(s))return 'normative';
- if(/\b(means?|refers? to|is defined|can be understood|is a |are a |denotes?|consists? of)\b/.test(s))return 'definition';
- return 'proposition';
-};
-
 const termPattern=term=>new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')}([^a-z0-9]|$)`,'i');
 const conceptsFor=sentence=>concepts.filter(concept=>(!concept.when||concept.when.test(sentence))&&(!concept.skip||!concept.skip.test(sentence))&&concept.terms.some(term=>termPattern(term).test(sentence))).slice(0,4);
-const addRow=(panel,label,text)=>{
- const row=document.createElement('span');row.className='sentence-expansion-row';
- const heading=document.createElement('b');heading.textContent=`${label}: `;
- row.append(heading,document.createTextNode(text));panel.append(row);
-};
-const buildExpansion=(panel,meta)=>{
+const buildExpansion=(panel,matches)=>{
  if(panel.dataset.ready)return;
  panel.dataset.ready='true';
- const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Deeper reading';panel.append(title);
- addRow(panel,'Analytical role',`${meta.role.label}. ${meta.role.explain}`);
- const matches=conceptsFor(meta.sentence);
- if(matches.length){
-  const group=document.createElement('span');group.className='sentence-concepts';
-  const groupTitle=document.createElement('b');groupTitle.textContent='Concepts in play';group.append(groupTitle);
-  for(const concept of matches){
-   const item=document.createElement('span');item.className='sentence-concept';
-   const name=document.createElement('b');name.textContent=concept.label;
-   item.append(name,document.createTextNode(` — ${concept.note} Example: ${concept.example}`));group.append(item);
-  }
-  panel.append(group);
- }else addRow(panel,'Meaning in context',`Read this as a ${meta.role.label.toLowerCase()} within “${meta.context}”. Fix its subject, scope and key terms before adding examples.`);
- addRow(panel,'Answer move',meta.role.use);
- addRow(panel,'Recall check',meta.role.check);
+ const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Words in this sentence';panel.append(title);
+ const group=document.createElement('span');group.className='sentence-concepts';
+ for(const concept of matches){
+  const item=document.createElement('span');item.className='sentence-concept';
+  const name=document.createElement('b');name.textContent=concept.label;
+  item.append(name,document.createTextNode(` — ${concept.note}`));group.append(item);
+ }
+ panel.append(group);
 };
 
 const textNodesFor=container=>{
@@ -202,11 +167,6 @@ const sentenceSegments=text=>{
  if(typeof Intl.Segmenter==='function')return [...new Intl.Segmenter('en',{granularity:'sentence'}).segment(text)].map(item=>({index:item.index,text:item.segment}));
  return [...text.matchAll(/[^.!?]+(?:[.!?]+[”’"']?|$)/g)].map(item=>({index:item.index,text:item[0]}));
 };
-const contextFor=container=>{
- const section=container.closest('.book-section,.recall');
- const heading=section?.querySelector(':scope > h2');
- return heading?.textContent.replace(/^\d+\.\s*/,'').trim()||'this section';
-};
 const annotateContainer=(container,state)=>{
  if(container.dataset.sentenceNotes==='true')return 0;
  if(container.querySelector('p,ul,ol,table,details,div,section,article,aside'))return 0;
@@ -219,21 +179,21 @@ const annotateContainer=(container,state)=>{
   while(end>start&&/\s/.test(text[end-1]))end--;
   return {start,end,sentence:text.slice(start,end)};
  }).filter(item=>item.sentence.length>=20&&(item.sentence.match(/[A-Za-zÀ-ÿ]+/g)||[]).length>=4);
- const context=contextFor(container);
  let count=0;
  for(const item of candidates.reverse()){
+  const matches=conceptsFor(item.sentence);
+  if(!matches.length)continue;
   const start=locate(nodes,item.start),end=locate(nodes,item.end);
   if(!start.node||!end.node)continue;
   const range=document.createRange();range.setStart(start.node,start.offset);range.setEnd(end.node,end.offset);
   const fragment=range.extractContents();
   const unit=document.createElement('span');unit.className='sentence-unit';unit.append(fragment);
   const noteId=`sentence-note-${state.bookId}-${++state.counter}`;
-  const link=document.createElement('a');link.className='sentence-explain-link';link.href=`#${noteId}`;link.textContent='explain';link.setAttribute('role','button');link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls',noteId);link.setAttribute('aria-label',`Explain: ${item.sentence.slice(0,120)}`);
+  const link=document.createElement('a');link.className='sentence-explain-link';link.href=`#${noteId}`;link.textContent='explain';link.setAttribute('role','button');link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls',noteId);link.setAttribute('aria-label',`Explain: ${matches.map(concept=>concept.label).join(', ')}`);
   const panel=document.createElement('span');panel.className='sentence-expansion';panel.id=noteId;panel.hidden=true;panel.setAttribute('role','note');
-  const role=roles[classify(item.sentence)];
   link.addEventListener('click',event=>{
    event.preventDefault();const opening=panel.hidden;
-   if(opening)buildExpansion(panel,{sentence:item.sentence,context,role});
+   if(opening)buildExpansion(panel,matches);
    panel.hidden=!opening;link.setAttribute('aria-expanded',String(opening));link.textContent=opening?'hide':'explain';
   });
   unit.append(document.createTextNode(' '),link,panel);range.insertNode(unit);count++;
@@ -247,7 +207,7 @@ const apply=(root,{bookId='00'}={})=>{
  let total=0;root.querySelectorAll(selector).forEach(container=>{total+=annotateContainer(container,state)});
  const meta=root.querySelector('.book-meta');
  if(meta){
-  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} hidden sentence explanations`;count.title='Select “explain” after a sentence to open its deeper meaning and exam use.';meta.append(count);
+  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} word explanations`;count.title='Select “explain” after a sentence to see definitions of the terms it contains.';meta.append(count);
  }
  root.dataset.sentenceExplanations=String(total);
  return total;
@@ -259,6 +219,6 @@ document.addEventListener('keydown',event=>{
   panel.hidden=true;const link=document.querySelector(`[aria-controls="${panel.id}"]`);if(link){link.setAttribute('aria-expanded','false');link.textContent='explain';}
  });
 });
-const inspect=sentence=>({role:roles[classify(sentence)].label,concepts:conceptsFor(sentence).map(concept=>concept.label)});
+const inspect=sentence=>({concepts:conceptsFor(sentence).map(concept=>concept.label)});
 window.SentenceNotes={apply,inspect};
 })();
