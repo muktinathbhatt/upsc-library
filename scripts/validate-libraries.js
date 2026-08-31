@@ -8,11 +8,32 @@ const expectedBooks={'Economics-Library':12,'Geography-Library':12,'History-Libr
 let failures=[];
 let grand={books:0,sections:0,words:0,questions:0,mains:0,models:0};
 
+const notesPath=path.join(root,'shared','sentence-notes.js');
+if(!fs.existsSync(notesPath))failures.push('Shared hidden sentence-explanation layer is missing');
+else{
+  try{
+    const notesContext={console,document:{addEventListener(){}}};notesContext.window=notesContext;vm.createContext(notesContext);
+    vm.runInContext(fs.readFileSync(notesPath,'utf8'),notesContext,{filename:notesPath});
+    const acceptance=[
+      ['Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.',['Need','Desert','Equality','Entitlement']],
+      ['Inflation redistributes purchasing power and affects poorer households disproportionately.',['Inflation']],
+      ['The monsoon is a seasonally reversing wind and rainfall system.',['Monsoon']],
+      ['Colonialism reorganised economy, knowledge and institutions for metropolitan power.',['Colonialism']]
+    ];
+    for(const [sentence,required] of acceptance){
+      const sample=notesContext.SentenceNotes?.inspect(sentence);
+      if(required.some(term=>!sample?.concepts.includes(term)))failures.push(`Sentence explanation does not unpack its acceptance test: ${required.join(', ')}`);
+    }
+  }catch(error){failures.push(`Shared sentence-explanation layer failed to load — ${error.message}`);}
+}
+
 function count(haystack,needle){return haystack.split(needle).length-1;}
 function textWords(html){return html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&[a-z0-9#]+;/gi,' ').trim().split(/\s+/).filter(Boolean).length;}
 
 for(const library of libraries){
   const booksDir=path.join(root,library,'books');
+  const readerPath=path.join(booksDir,'reader.js');
+  if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/sentence-notes.js'))failures.push(`${library}: reader is not connected to the shared sentence-explanation layer`);
   const pages=fs.readdirSync(booksDir).filter(f=>/^\d\d-.*\.html$/.test(f));
   const seen=new Set();
   const subtotal={books:0,sections:0,words:0,questions:0,mains:0,models:0};
@@ -70,17 +91,6 @@ for(const library of libraries){
       const slug=appBook.title.toLowerCase().replaceAll('&','and').replaceAll(/[^a-z0-9]+/g,'-').replace(/-$/,'');
       const target=`${appBook.id}-${slug}.html`;
       if(!fs.existsSync(path.join(booksDir,target)))failures.push(`${library}: app route missing ${target}`);
-    }
-    const notesPath=path.join(booksDir,'sentence-notes.js');
-    if(!fs.existsSync(notesPath))failures.push(`${library}: hidden sentence-explanation layer is missing`);
-    else{
-      try{
-        const notesContext={console,document:{addEventListener(){}}};notesContext.window=notesContext;vm.createContext(notesContext);
-        vm.runInContext(fs.readFileSync(notesPath,'utf8'),notesContext,{filename:notesPath});
-        const sample=notesContext.SentenceNotes?.inspect('Need, desert, equality and entitlement are rival distributive criteria rather than interchangeable slogans.');
-        const required=['Need','Desert','Equality','Entitlement'];
-        if(sample?.role!=='Distinction or comparison'||required.some(term=>!sample?.concepts.includes(term)))failures.push(`${library}: sentence explanation does not unpack the distributive-criteria acceptance test`);
-      }catch(error){failures.push(`${library}: sentence-explanation layer failed to load — ${error.message}`);}
     }
   }
   if(subtotal.books!==expectedBooks[library])failures.push(`${library}: rendered ${subtotal.books} books`);

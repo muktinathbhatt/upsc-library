@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/
-          cp -r Economics-Library Geography-Library History-Library PSIR-Library _site/
+          cp -r Economics-Library Geography-Library History-Library PSIR-Library shared _site/
           touch _site/.nojekyll
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
