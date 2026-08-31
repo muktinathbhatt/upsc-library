@@ -163,18 +163,20 @@ const sentenceGuides=[
 const namesFor=matches=>matches.map(concept=>concept.label).join(matches.length===2?' and ':', ');
 const generalGuide=(matches)=>{
  const names=namesFor(matches);
- if(matches.length===1)return `This sentence uses ${names} to explain something. Ask three questions: What causes it? How does it work? What happens next?`;
- return `This sentence links ${names}. Do not learn these terms as separate words. Find the link between them. Then follow the result of that link.`;
+ if(matches.length===1)return `This paragraph uses ${names} to explain a cause, a process, or an effect. First identify which one it is. Then connect it to the next result.`;
+ return `This paragraph links ${names}. Do not learn these terms as separate words. Find the relationship between them. Then follow the result of that relationship.`;
 };
 const guideFor=(sentence,matches,subject)=>sentenceGuides.find(guide=>(!guide.subject||guide.subject===subject)&&guide.when.test(sentence))?.text||generalGuide(matches);
-const buildExpansion=(panel,matches,sentence,subject)=>{
+const buildExpansion=(panel,matches,paragraph,subject)=>{
  if(panel.dataset.ready)return;
  panel.dataset.ready='true';
- const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Explanation in context';panel.append(title);
+ const title=document.createElement('span');title.className='sentence-expansion-title';title.textContent='Paragraph explanation';panel.append(title);
  const explanation=document.createElement('span');explanation.className='sentence-expansion-row';
- const label=document.createElement('b');label.textContent='What this sentence means: ';
- explanation.append(label,document.createTextNode(guideFor(sentence,matches,subject)));panel.append(explanation);
+ const label=document.createElement('b');label.textContent='What this paragraph means: ';
+ explanation.append(label,document.createTextNode(guideFor(paragraph,matches,subject)));panel.append(explanation);
+ if(!matches.length)return;
  const group=document.createElement('span');group.className='sentence-concepts';
+ const groupTitle=document.createElement('b');groupTitle.textContent='New terms in this paragraph';group.append(groupTitle);
  for(const concept of matches){
   const item=document.createElement('span');item.className='sentence-concept';
   const name=document.createElement('b');name.textContent=concept.label;
@@ -203,66 +205,42 @@ const textNodesFor=container=>{
  const nodes=[];
  const walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT,{acceptNode:node=>{
   if(!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
-  if(node.parentElement.closest('.sentence-expansion,.sentence-explain-link,.beginner-visual-map,script,style,button'))return NodeFilter.FILTER_REJECT;
+  if(node.parentElement.closest('.sentence-expansion,.sentence-explain-link,.beginner-visual-map,.subject-visual,script,style,button'))return NodeFilter.FILTER_REJECT;
   return NodeFilter.FILTER_ACCEPT;
  }});
  while(walker.nextNode())nodes.push(walker.currentNode);
  return nodes;
-};
-const locate=(nodes,offset)=>{
- let cursor=0;
- for(const node of nodes){
-  const end=cursor+node.nodeValue.length;
-  if(offset<=end)return {node,offset:Math.max(0,offset-cursor)};
-  cursor=end;
- }
- const node=nodes[nodes.length-1];return {node,offset:node.nodeValue.length};
-};
-const sentenceSegments=text=>{
- if(typeof Intl.Segmenter==='function')return [...new Intl.Segmenter('en',{granularity:'sentence'}).segment(text)].map(item=>({index:item.index,text:item.segment}));
- return [...text.matchAll(/[^.!?]+(?:[.!?]+[”’"']?|$)/g)].map(item=>({index:item.index,text:item[0]}));
 };
 const annotateContainer=(container,state)=>{
  if(container.dataset.sentenceNotes==='true')return 0;
  if(container.querySelector('p,ul,ol,table,details,div,section,article,aside'))return 0;
  container.dataset.sentenceNotes='true';
  const nodes=textNodesFor(container);if(!nodes.length)return 0;
- const text=nodes.map(node=>node.nodeValue).join('');
- const candidates=sentenceSegments(text).map(item=>{
-  let start=item.index,end=item.index+item.text.length;
-  while(start<end&&/\s/.test(text[start]))start++;
-  while(end>start&&/\s/.test(text[end-1]))end--;
-  return {start,end,sentence:text.slice(start,end)};
- }).filter(item=>item.sentence.length>=20&&(item.sentence.match(/[A-Za-zÀ-ÿ]+/g)||[]).length>=4);
- let count=0;
- for(const item of candidates.reverse()){
-  const matches=conceptsFor(item.sentence,state.subject);
-  if(!matches.length)continue;
-  const start=locate(nodes,item.start),end=locate(nodes,item.end);
-  if(!start.node||!end.node)continue;
-  const range=document.createRange();range.setStart(start.node,start.offset);range.setEnd(end.node,end.offset);
-  const fragment=range.extractContents();
-  const unit=document.createElement('span');unit.className='sentence-unit';unit.append(fragment);
-  const noteId=`sentence-note-${state.bookId}-${++state.counter}`;
-  const link=document.createElement('a');link.className='sentence-explain-link';link.href=`#${noteId}`;link.textContent='explain';link.setAttribute('role','button');link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls',noteId);link.setAttribute('aria-label',`Explain: ${matches.map(concept=>concept.label).join(', ')}`);
-  const panel=document.createElement('span');panel.className='sentence-expansion';panel.id=noteId;panel.hidden=true;panel.setAttribute('role','note');
-  link.addEventListener('click',event=>{
-   event.preventDefault();const opening=panel.hidden;
-   if(opening)buildExpansion(panel,matches,item.sentence,state.subject);
-   panel.hidden=!opening;link.setAttribute('aria-expanded',String(opening));link.textContent=opening?'hide':'explain';
-  });
-  unit.append(document.createTextNode(' '),link,panel);range.insertNode(unit);count++;
- }
- return count;
+ const paragraph=nodes.map(node=>node.nodeValue).join(' ').replace(/\s+/g,' ').trim();
+ if(paragraph.length<30)return 0;
+ const allMatches=conceptsFor(paragraph,state.subject);
+ const newMatches=allMatches.filter(concept=>!state.explainedConcepts.has(concept.label));
+ if(!newMatches.length)return 0;
+ newMatches.forEach(concept=>state.explainedConcepts.add(concept.label));
+ const noteId=`paragraph-note-${state.bookId}-${++state.counter}`;
+ const link=document.createElement('a');link.className='sentence-explain-link';link.href=`#${noteId}`;link.textContent='explain paragraph';link.setAttribute('role','button');link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls',noteId);link.setAttribute('aria-label',`Explain this paragraph: ${newMatches.map(concept=>concept.label).join(', ')}`);
+ const panel=document.createElement('span');panel.className='sentence-expansion';panel.id=noteId;panel.hidden=true;panel.setAttribute('role','note');
+ link.addEventListener('click',event=>{
+  event.preventDefault();const opening=panel.hidden;
+  if(opening)buildExpansion(panel,newMatches,paragraph,state.subject);
+  panel.hidden=!opening;link.setAttribute('aria-expanded',String(opening));link.textContent=opening?'hide paragraph':'explain paragraph';
+ });
+ container.append(document.createTextNode(' '),link,panel);
+ return 1;
 };
 
 const apply=(root,{bookId='00',subject=''}={})=>{
- const state={bookId,subject,counter:0};
- const selector='.book-head .dek,.book-section p,.book-section li,.book-section td,.book-section th,.book-section .chain,.book-section .formula,.book-section .argument-chain,.book-section .comparison>div,.book-section .revision-grid>div,.book-section .thinker-card,.book-section .why,.recall li';
+ const state={bookId,subject,counter:0,explainedConcepts:new Set()};
+ const selector='.book-head .dek,.book-section p,.book-section li,.book-section .chain,.book-section .formula,.book-section .argument-chain,.book-section .comparison>div,.book-section .revision-grid>div,.book-section .thinker-card,.book-section .why,.recall li';
  let total=0;root.querySelectorAll(selector).forEach(container=>{total+=annotateContainer(container,state)});
  const meta=root.querySelector('.book-meta');
  if(meta){
-  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} contextual explanations`;count.title='Select “explain” after a sentence to unpack its meaning, mechanism and relevant terms.';meta.append(count);
+  const count=document.createElement('span');count.className='sentence-note-count';count.textContent=`${total} paragraph explanations`;count.title='Select “explain paragraph” once per paragraph. A term is expanded only at its first useful appearance in this book.';meta.append(count);
  }
  root.dataset.sentenceExplanations=String(total);
  return total;

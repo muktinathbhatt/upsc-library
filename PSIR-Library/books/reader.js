@@ -8,7 +8,7 @@ const activateSentenceNotes=article=>{
  if(sentenceNotesLoading)return;
  sentenceNotesLoading=true;
  const notesScript=document.createElement('script');
-  notesScript.src='../../shared/sentence-notes.js?v=20260831-ste100';
+  notesScript.src='../../shared/sentence-notes.js?v=20260831-paragraph-notes';
  notesScript.addEventListener('load',applyNotes);
  notesScript.addEventListener('error',()=>{sentenceNotesLoading=false;});
  document.head.append(notesScript);
@@ -24,6 +24,19 @@ const activateBeginnerVisuals=(article,book)=>{
  visualScript.src='../../shared/beginner-library-visuals.js?v=20260831';
  visualScript.addEventListener('load',applyVisuals);
  visualScript.addEventListener('error',()=>{beginnerVisualsLoading=false;});
+ document.head.append(visualScript);
+};
+
+let subjectVisualsLoading=false;
+const activateSubjectVisuals=(article,book)=>{
+ const applyVisuals=()=>window.SubjectExplanatoryVisuals?.apply(article,{subject:'psir',bookId:id,sections:book.sections});
+ if(window.SubjectExplanatoryVisuals)return applyVisuals();
+ if(subjectVisualsLoading)return;
+ subjectVisualsLoading=true;
+ const visualScript=document.createElement('script');
+ visualScript.src='../../shared/subject-explanatory-visuals.js?v=20260831-subject-visuals';
+ visualScript.addEventListener('load',applyVisuals);
+ visualScript.addEventListener('error',()=>{subjectVisualsLoading=false;});
  document.head.append(visualScript);
 };
 
@@ -47,6 +60,7 @@ const renderBook=()=>{
   },{rootMargin:'-20% 0px -70%'});
   document.querySelectorAll('.book-section').forEach(section=>observer.observe(section));
   activateBeginnerVisuals(article,book);
+  activateSubjectVisuals(article,book);
   activateSentenceNotes(article);
  }else{
   document.querySelector('#article').innerHTML='<section class="book-section"><h1>Book data could not be loaded</h1><p>Return to the library and reopen this book. If the problem continues, refresh the page.</p><p><a href="../index.html#library">← Return to all books</a></p></section>';

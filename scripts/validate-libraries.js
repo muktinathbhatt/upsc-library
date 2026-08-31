@@ -47,6 +47,18 @@ else{
   }catch(error){failures.push(`Shared fresher visual-learning layer failed to load — ${error.message}`);}
 }
 
+const explanatoryVisualsPath=path.join(root,'shared','subject-explanatory-visuals.js');
+if(!fs.existsSync(explanatoryVisualsPath))failures.push('Shared subject-specific explanatory visual layer is missing');
+else{
+  try{
+    const explanatoryContext={};explanatoryContext.window=explanatoryContext;vm.createContext(explanatoryContext);
+    vm.runInContext(fs.readFileSync(explanatoryVisualsPath,'utf8'),explanatoryContext,{filename:explanatoryVisualsPath});
+    if(typeof explanatoryContext.SubjectExplanatoryVisuals?.apply!=='function')failures.push('Shared subject-specific explanatory visual layer cannot be applied');
+    const source=fs.readFileSync(explanatoryVisualsPath,'utf8');
+    if(!source.includes("'ppc'")||!source.includes("'market'")||!source.includes("'lorenz'"))failures.push('Economics explanatory curves are incomplete');
+  }catch(error){failures.push(`Shared subject-specific explanatory visual layer failed to load — ${error.message}`);}
+}
+
 function count(haystack,needle){return haystack.split(needle).length-1;}
 function textWords(html){return html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&[a-z0-9#]+;/gi,' ').trim().split(/\s+/).filter(Boolean).length;}
 
@@ -55,6 +67,7 @@ for(const library of libraries){
   const readerPath=path.join(booksDir,'reader.js');
   if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/sentence-notes.js'))failures.push(`${library}: reader is not connected to the shared sentence-explanation layer`);
   if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/beginner-library-visuals.js'))failures.push(`${library}: reader is not connected to the shared fresher visual-learning layer`);
+  if(!fs.readFileSync(readerPath,'utf8').includes('../../shared/subject-explanatory-visuals.js'))failures.push(`${library}: reader is not connected to the shared subject-specific explanatory visual layer`);
   const pages=fs.readdirSync(booksDir).filter(f=>/^\d\d-.*\.html$/.test(f));
   const seen=new Set();
   const subtotal={books:0,sections:0,words:0,questions:0,mains:0,models:0};
