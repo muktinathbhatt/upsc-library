@@ -31,6 +31,8 @@ else{
     if(!/market-clearing point/i.test(equilibriumExplanation))failures.push('Economics equilibrium explanation is not a contextual explanation');
     const taxExplanation=notesContext.SentenceNotes?.inspect('Tax incidence falls more heavily on the less elastic side of a market.','economics').explanation||'';
     if(!/legal payer|statutory remittance/i.test(taxExplanation))failures.push('Economics tax-incidence explanation is not a contextual explanation');
+    const growthNote=notesContext.SentenceNotes?.inspect('Mathematical growth models belong to Economics Optional and are deliberately excluded here.','economics');
+    if(!growthNote?.concepts.includes('Economic growth')||!growthNote.answerUse?.some(item=>item.concept==='Economic growth'&&/growth.*development/i.test(item.text)))failures.push('Book 3 growth explanation is not answer-ready');
     if(notesContext.SentenceNotes?.inspect('A binding price ceiling below equilibrium causes shortage; a binding floor above it causes surplus, unless the state purchases the excess.','economics').concepts.includes('State'))failures.push('Economics explanation incorrectly presents the PSIR meaning of state');
   }catch(error){failures.push(`Shared sentence-explanation layer failed to load — ${error.message}`);}
 }
@@ -78,8 +80,11 @@ for(const library of libraries){
     const sectionIds=(book.sections||[]).map(section=>section.id);
     if(library==='PSIR-Library'&&new Set(sectionIds).size!==sectionIds.length)failures.push(`${library}/${page}: duplicate section id`);
     if(!Array.isArray(book.recall)||book.recall.length<4)failures.push(`${library}/${page}: recall checkpoint missing`);
-    const content=book.sections.map(s=>s.html||'').join(' ');
-    const fullStudy=[book.title,book.dek,...book.sections.flatMap(s=>[s.title,s.html||'']),...(book.recall||[])].join(' ');
+    const supplements=context.BOOK_SUPPLEMENTS?.[id]||{};
+    const renderedSection=section=>`${section.html||''}${supplements[section.id]||''}`;
+    const content=book.sections.map(renderedSection).join(' ');
+    const fullStudy=[book.title,book.dek,...book.sections.flatMap(s=>[s.title,renderedSection(s)]),...(book.recall||[])].join(' ');
+    if(library==='Economics-Library'&&id==='03'&&!/Beginner’s guide: economic growth and structural transformation/.test(supplements.models||''))failures.push('Economics Book 3 section 2 is missing its beginner growth guide');
     const words=textWords(fullStudy);
     const questions=count(content,'practice-q');
     const mains=count(content,'class="answer-blueprint"')+count(content,'class="mains-blueprint"')+count(content,'class="blueprint"');
