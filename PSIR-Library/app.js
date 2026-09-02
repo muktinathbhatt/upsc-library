@@ -1,5 +1,5 @@
 const books=[
-['01','Syllabus & Master Roadmap','Official 2026 syllabus, nineteen-book map, study cycles and source method.','syllabus roadmap strategy'],
+['01','Syllabus & Master Roadmap','Official 2026 syllabus, twenty-book map, study cycles and source method.','syllabus roadmap strategy'],
 ['02','Political Theory & Theories of the State','Meaning, approaches and liberal, neoliberal, Marxist, pluralist, postcolonial and feminist state theory.','political theory state liberal marxist feminist interpretive elite mosca pareto michels'],
 ['03','Justice, Equality, Rights, Democracy & Power','Rawls and his critics; equality, freedom, rights, democracy, hegemony, ideology and legitimacy.','justice rawls equality rights democracy power multiculturalism kymlicka taylor macpherson legitimacy'],
 ['04','Political Ideologies','Liberalism, socialism, Marxism, fascism, Gandhism and feminism in comparison.','ideology liberalism socialism marxism fascism nazism gandhi feminism crisis'],
@@ -17,8 +17,26 @@ const books=[
 ['16','India, Global South & Major Powers','Africa, Latin America, US, EU, Japan, China, Russia and multi-alignment.','global south usa china russia eu japan africa latin america tariff wto'],
 ['17','Nuclear Policy & Contemporary Foreign-Policy Dossier','India’s nuclear evolution, UN role and dated issue briefs for contemporary crises and coalitions.','nuclear policy 1998 un peacekeeping west asia palestine indo pacific brics quad pahalgam operation sindoor'],
 ['18','PYQ Theme Workbook','Recurring Paper I and II demands, theme drills and self-evaluation.','pyq previous questions practice themes 2024 2025 mapping recurrence'],
-['19','Answer-Writing Manual','Optional directives, scholar use, argument architecture, model answers and timed revision.','answer writing quotations scholars model answers revision full answers 50']
+['19','Answer-Writing Manual','Optional directives, scholar use, argument architecture, model answers and timed revision.','answer writing quotations scholars model answers revision full answers 50'],
+['20','Topic-Wise PYQs (2013–2025)','All 728 PSIR Mains question parts from 2013–2025, grouped under practical syllabus topics for focused answer practice.','pyq previous year questions 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 topic wise question bank paper 1 paper 2']
 ];
 const slug=t=>t.toLowerCase().replaceAll('&','and').replaceAll(/[^a-z0-9]+/g,'-').replace(/-$/,'');
-const grid=document.querySelector('#book-grid');for(const [n,t,d,s] of books){const a=document.createElement('a');a.className='book-card'+(n==='01'?' featured':'');a.href=`books/${n}-${slug(t)}.html`;a.dataset.search=(t+' '+d+' '+s).toLowerCase();a.innerHTML=`<span class="number">${n}</span>${n==='01'?'<span class="tag">START HERE</span>':''}<h3>${t}</h3><p>${d}</p><span class="open">Open book →</span>`;grid.append(a)}
-const q=document.querySelector('#search'),e=document.querySelector('#empty');q?.addEventListener('input',()=>{let n=0;document.querySelectorAll('.book-card').forEach(c=>{const y=c.dataset.search.includes(q.value.toLowerCase().trim());c.hidden=!y;if(y)n++});e.hidden=!!n});
+const groupFor=n=>n==='01'?'orientation':n<='06'?'p1a':n<='09'?'p1b':n<='13'?'p2a':n<='17'?'p2b':'conversion';
+const groups=[
+ {id:'orientation',paper:'Begin here',section:'Orientation',title:'Syllabus and Master Roadmap',description:'Understand the complete optional before entering either paper.'},
+ {id:'p1a',paper:'Paper I',section:'Section A',title:'Political Theory and Indian Political Thought',description:'Political theory, concepts, ideologies, Western thinkers and Indian thinkers.'},
+ {id:'p1b',paper:'Paper I',section:'Section B',title:'Indian Government and Politics',description:'Nationalism, Constitution, institutions, political economy, identity and movements.'},
+ {id:'p2a',paper:'Paper II',section:'Section A',title:'Comparative Political Analysis and International Politics',description:'Comparative approaches, IR theory, international order, political economy and global institutions.'},
+ {id:'p2b',paper:'Paper II',section:'Section B',title:'India and the World',description:'Indian foreign policy, South Asia, major powers, the Global South and contemporary dossiers.'},
+ {id:'conversion',paper:'Both papers',section:'Exam conversion',title:'PYQs and Answer Writing',description:'Convert completed study into a complete topic-wise question map, recurring-theme mastery and timed Optional answers.'}
+];
+const shelf=document.querySelector('#book-grid');
+for(const group of groups){
+ const groupBooks=books.filter(([n])=>groupFor(n)===group.id);
+ const section=document.createElement('section');section.className='book-shelf-group';section.id=group.id;
+ section.innerHTML=`<header class="shelf-heading"><div><span>${group.paper} · ${group.section}</span><h3>${group.title}</h3><p>${group.description}</p></div><b>${groupBooks.length} ${groupBooks.length===1?'book':'books'}</b></header><div class="book-group-grid"></div>`;
+ const groupGrid=section.querySelector('.book-group-grid');
+ for(const [n,t,d,s] of groupBooks){const a=document.createElement('a');a.className='book-card'+(n==='01'?' featured':'');a.href=`books/${n}-${slug(t)}.html`;a.dataset.search=(t+' '+d+' '+s+' '+group.paper+' '+group.section+' '+group.title).toLowerCase();a.innerHTML=`<span class="number">${n}</span>${n==='01'?'<span class="tag">START HERE</span>':''}<h3>${t}</h3><p>${d}</p><span class="open">Open book →</span>`;groupGrid.append(a)}
+ shelf.append(section);
+}
+const q=document.querySelector('#search'),e=document.querySelector('#empty');q?.addEventListener('input',()=>{let visible=0;document.querySelectorAll('.book-card').forEach(card=>{const match=card.dataset.search.includes(q.value.toLowerCase().trim());card.hidden=!match;if(match)visible++});document.querySelectorAll('.book-shelf-group').forEach(group=>{group.hidden=!group.querySelector('.book-card:not([hidden])')});e.hidden=!!visible});

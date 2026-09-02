@@ -4,7 +4,7 @@ const vm=require('vm');
 
 const root=path.resolve(__dirname,'..');
 const libraries=['Economics-Library','Geography-Library','History-Library','PSIR-Library'];
-const expectedBooks={'Economics-Library':12,'Geography-Library':12,'History-Library':13,'PSIR-Library':19};
+const expectedBooks={'Economics-Library':12,'Geography-Library':12,'History-Library':13,'PSIR-Library':20};
 let failures=[];
 let grand={books:0,sections:0,words:0,questions:0,mains:0,models:0};
 
@@ -110,7 +110,7 @@ for(const library of libraries){
     const fullStudy=[book.title,book.dek,...book.sections.flatMap(s=>[s.title,renderedSection(s)]),...(book.recall||[])].join(' ');
     if(library==='Economics-Library'&&id==='03'&&!/Beginner’s guide: economic growth and structural transformation/.test(supplements.models||''))failures.push('Economics Book 3 section 2 is missing its beginner growth guide');
     const words=textWords(fullStudy);
-    const questions=count(content,'practice-q');
+    const questions=count(content,'practice-q')+count(content,'class="pyq-question"');
     const mains=count(content,'class="answer-blueprint"')+count(content,'class="mains-blueprint"')+count(content,'class="blueprint"');
     const models=count(content,'class="model-answer"');
     const minimumWords=library==='PSIR-Library'?(id==='01'?1300:2200):1000;
